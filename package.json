@@ -1,0 +1,26 @@
+{
+  "name": "samtube",
+  "version": "1.1.0",
+  "private": true,
+  "description": "SamTube — Hindi + English YouTube video discovery app with search, history, likes and playlists.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "setup": "npm install && npm install --prefix client",
+    "dev": "concurrently -n api,web -c red,cyan \"npm run server\" \"npm run client\"",
+    "server": "node --watch server/index.js",
+    "client": "npm run dev --prefix client",
+    "build": "npm run build --prefix client",
+    "start": "node server/index.js",
+    "preview": "npm run build && node server/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

@@ -1,0 +1,25 @@
+# Render Blueprint - SamTube backend (API only, frontend on Vercel)
+services:
+  - type: web
+    name: samtube-api
+    runtime: node
+    buildCommand: npm install
+    startCommand: node server/index.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20.x
+      - key: YOUTUBE_API_KEY
+        sync: false  # Render dashboard me paste karo (repo me kabhi mat daalo)
+      - key: CLIENT_ORIGIN
+        value: https://*.vercel.app
+      - key: PORT
+        value: 10000
+    healthCheckPath: /api/health
+
+# Optional: SamTube ka data browser localStorage me rehta hai, DB ki zaroorat nahi.
+# Agar baad me history/likes server DB karni ho to Render Postgres yahan add karo:
+# databases:
+#   - name: samtube-db
+#     databaseName: samtube
+#     user: samtube
+#     plan: free
