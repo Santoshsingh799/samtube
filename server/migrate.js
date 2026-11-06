@@ -8,10 +8,9 @@ const path = require('path');
 const fs = require('fs');
 const db = require('./db');
 
-async function main() {
+async function runMigrations() {
   if (!db.isConfigured()) {
-    console.error('DATABASE_URL is not set. Copy .env.example values or export DATABASE_URL first.');
-    process.exit(1);
+    throw new Error('DATABASE_URL is not set');
   }
   const client = await db.getPool().connect();
   try {
@@ -41,9 +40,7 @@ async function main() {
         console.log(`ok    ${file}`);
       } catch (error) {
         await client.query('ROLLBACK');
-        console.error(`fail  ${file}: ${error.message}`);
-        process.exitCode = 1;
-        return;
+        throw new Error(`fail ${file}: ${error.message}`, { cause: error });
       }
     }
     console.log('migrations done');
@@ -53,7 +50,11 @@ async function main() {
   }
 }
 
-main().catch(error => {
-  console.error('migrate failed:', error);
-  process.exit(1);
-});
+if (require.main === module) {
+  runMigrations().catch(error => {
+    console.error('migrate failed:', error);
+    process.exit(1);
+  });
+}
+
+module.exports = { runMigrations };

@@ -10,6 +10,7 @@ const youtube = require('./youtube');
 const auth = require('./auth');
 const authRoutes = require('./authRoutes');
 const sectionsRouter = require('./sections');
+const { runMigrations } = require('./migrate');
 
 const db = require('./db');
 
@@ -77,6 +78,7 @@ app.get('/api/health', (_req, res) => {
     app: 'SamTube API',
     mode: youtube.mode(),
     hasApiKey: youtube.hasApiKey(),
+    officialApi: youtube.officialStatus(),
     db: dbStatus(),
     uptime: Math.round(process.uptime()),
     time: new Date().toISOString()
@@ -161,6 +163,18 @@ if (fs.existsSync(path.join(clientDist, 'index.html'))) {
 /* ------------------------------ error handler ---------------------------- */
 
 app.use((error, _req, res, _next) => {
+  const message = String(error?.message || '');
+  // Database connectivity/auth problems: say exactly what to check instead of a raw 500.
+  const isDbProblem =
+    /password authentication failed|connection refused|ECONNREFUSED|does not exist|ENOTFOUND|timeout|too many clients/i.test(message) ||
+    error?.code === '28P01' || error?.code === '3D000' || error?.code === 'ECONNREFUSED';
+  if (isDbProblem) {
+    console.error('[db]', message);
+    return res.status(503).json({
+      error: 'Database connection fail ho gaya. Check karo: (1) .env me DATABASE_URL ka password sahi hai? (2) samtube database pgAdmin me bana hai? (3) `node server/migrate.js` run kiya? Phir server restart karo.',
+      code: 'DB_UNAVAILABLE'
+    });
+  }
   const status = error.status && error.status >= 400 && error.status < 600 ? error.status : 500;
   if (status >= 500) console.error('[api]', error.message);
   res.status(status).json({
@@ -169,13 +183,27 @@ app.use((error, _req, res, _next) => {
   });
 });
 
-const server = app.listen(PORT, () => {
-  const mode = youtube.hasApiKey() ? 'YouTube Data API key detected' : 'no API key — using key-free public mode';
-  console.log(`SamTube API running at http://localhost:${PORT} (${mode})`);
+let server;
+
+async function start() {
+  if (db.isConfigured()) {
+    console.log('[db] applying migrations...');
+    await runMigrations();
+  }
+  server = app.listen(PORT, () => {
+    const mode = youtube.hasApiKey() ? 'YouTube Data API key detected' : 'no API key — using key-free public mode';
+    console.log(`SamTube API running at http://localhost:${PORT} (${mode})`);
+  });
+}
+
+start().catch(error => {
+  console.error('[startup]', error.message);
+  process.exit(1);
 });
 
 function shutdown(signal) {
   console.log(`\n${signal} received, closing server...`);
+  if (!server) return process.exit(0);
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 4000).unref();
 }
