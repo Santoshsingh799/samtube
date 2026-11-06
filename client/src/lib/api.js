@@ -29,11 +29,21 @@ function sleep(ms, signal) {
   });
 }
 
-async function request(path, { signal, retries = 2 } = {}) {
+async function request(path, { signal, retries = 2, method = 'GET', body } = {}) {
   let response;
+  const init = {
+    method,
+    signal,
+    credentials: 'same-origin',
+    headers: { accept: 'application/json' }
+  };
+  if (body !== undefined) {
+    init.headers['content-type'] = 'application/json';
+    init.body = JSON.stringify(body);
+  }
   for (let attempt = 0; ; attempt += 1) {
     try {
-      response = await fetch(path, { signal, headers: { accept: 'application/json' } });
+      response = await fetch(path, init);
     } catch (error) {
       if (error.name === 'AbortError') throw error;
       throw new ApiError(
@@ -70,9 +80,46 @@ export const api = {
 
   video: (id, options) => request(`${API_BASE}/video/${encodeURIComponent(id)}`, options),
 
-  related: ({ id, title = '', channel = '', language = 'en', limit = 10 }, options) =>
-    request(`${API_BASE}/related/${encodeURIComponent(id)}?${buildQuery({ title, channel, language, limit })}`, options),
+  related: ({ id, title = '', channel = '', language = 'en', limit = 10, topic = '' }, options) =>
+    request(`${API_BASE}/related/${encodeURIComponent(id)}?${buildQuery({ title, channel, language, limit, topic })}`, options),
 
   suggest: (q, language, topic, options) =>
-    request(`${API_BASE}/suggest?${buildQuery({ q, language, topic })}`, options)
+    request(`${API_BASE}/suggest?${buildQuery({ q, language, topic })}`, options),
+
+  /* ------------------------------ auth (database) ------------------------------ */
+  signup: ({ email, password, displayName }, options) =>
+    request(`${API_BASE}/auth/signup`, { ...options, method: 'POST', body: { email, password, displayName } }),
+
+  login: ({ email, password }, options) =>
+    request(`${API_BASE}/auth/login`, { ...options, method: 'POST', body: { email, password } }),
+
+  logout: (options) => request(`${API_BASE}/auth/logout`, { ...options, method: 'POST' }),
+
+  me: (options) => request(`${API_BASE}/auth/me`, options),
+
+  /* --------------------- filter registry + custom sections --------------------- */
+  filters: (options) => request(`${API_BASE}/filters`, options),
+
+  sections: {
+    list: (options) => request(`${API_BASE}/sections`, options),
+    get: (id, options) => request(`${API_BASE}/sections/${encodeURIComponent(id)}`, options),
+    create: (section, options) =>
+      request(`${API_BASE}/sections`, { ...options, method: 'POST', body: section }),
+    update: (id, section, options) =>
+      request(`${API_BASE}/sections/${encodeURIComponent(id)}`, { ...options, method: 'PUT', body: section }),
+    patch: (id, patch, options) =>
+      request(`${API_BASE}/sections/${encodeURIComponent(id)}`, { ...options, method: 'PATCH', body: patch }),
+    remove: (id, options) => request(`${API_BASE}/sections/${encodeURIComponent(id)}`, { ...options, method: 'DELETE' }),
+    duplicate: (id, options) =>
+      request(`${API_BASE}/sections/${encodeURIComponent(id)}/duplicate`, { ...options, method: 'POST' }),
+    reorder: (orderedIds, options) =>
+      request(`${API_BASE}/sections/reorder`, { ...options, method: 'POST', body: { orderedIds } }),
+    exportUrl: (id) => `${API_BASE}/sections/${encodeURIComponent(id)}/export`,
+    import: (payload, options) =>
+      request(`${API_BASE}/sections/import`, { ...options, method: 'POST', body: payload }),
+    feed: ({ id, q = '', pageToken = '', limit = 24, sort = '' }, options) =>
+      request(`${API_BASE}/sections/${encodeURIComponent(id)}/feed?${buildQuery({ q, pageToken, limit, sort })}`, options),
+    explain: (id, video, options) =>
+      request(`${API_BASE}/sections/${encodeURIComponent(id)}/explain`, { ...options, method: 'POST', body: { video } })
+  }
 };

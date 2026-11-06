@@ -1,5 +1,7 @@
-import { Clock3, Compass, Flame, Heart, Home, Info, ListVideo, Sparkles } from 'lucide-react';
+import { BookOpen, Clock3, Compass, Flame, Heart, Home, Info, ListVideo, LogIn, LogOut, Layers, Sparkles, TrendingUp, Plus, Settings2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useHistory, useLikes, usePlaylists } from '../lib/store';
+import { api } from '../lib/api';
 
 export default function Sidebar({
   route,
@@ -7,26 +9,49 @@ export default function Sidebar({
   open = false,
   language = 'hi',
   topic = 'general',
+  user = null,
   onLanguageChange,
   onNavigate,
   onHome,
   onExplore,
-  onBhagwan
+  onBhagwan,
+  onAudiobook,
+  onTrading,
+  onLogout
 }) {
   const history = useHistory();
   const liked = useLikes();
   const playlists = usePlaylists();
+  const [sections, setSections] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    if (!user) {
+      setSections([]);
+      return undefined;
+    }
+    api.sections.list()
+      .then(data => { if (active) setSections((data.sections || []).filter(section => !section.hidden)); })
+      .catch(() => { if (active) setSections([]); });
+    return () => { active = false; };
+  }, [user, route.view, route.id]);
 
   const isActive = view => {
     if (view === 'bhagwan') return route.view === 'home' && topic === 'bhagwan';
-    if (view === 'home') return route.view === 'home' && topic !== 'bhagwan';
+    if (view === 'audiobook') return route.view === 'home' && topic === 'audiobook';
+    if (view === 'trading') return route.view === 'home' && topic === 'trading';
+    if (view === 'home') return route.view === 'home' && topic !== 'bhagwan' && topic !== 'audiobook' && topic !== 'trading';
     return route.view === view;
   };
 
+  const isSectionActive = id => route.view === 'section-feed' && route.id === id;
+
   const items = [
-    { key: 'home', label: 'Home', icon: Home, href: '#/', action: onHome, count: null },
-    { key: 'bhagwan', label: 'Bhagwan', icon: Flame, href: '#/', action: onBhagwan, count: null },
-    { key: 'explore', label: 'Explore', icon: Compass, action: onExplore, count: null },
+    { key: 'home', label: 'Home', icon: Home, href: '#/', action: onHome },
+    { key: 'bhagwan', label: 'Bhagwan', icon: Flame, href: '#/', action: onBhagwan },
+    { key: 'audiobook', label: 'Audiobooks', icon: BookOpen, href: '#/', action: onAudiobook },
+    { key: 'trading', label: 'Trading', icon: TrendingUp, href: '#/', action: onTrading },
+    { key: 'explore', label: 'Explore', icon: Compass, action: onExplore },
     { key: 'history', label: 'History', icon: Clock3, href: '#/history', count: history.length },
     { key: 'liked', label: 'Liked videos', icon: Heart, href: '#/liked', count: liked.length },
     { key: 'playlists', label: 'Playlists', icon: ListVideo, href: '#/playlists', count: playlists.length }
@@ -68,6 +93,48 @@ export default function Sidebar({
         })}
       </nav>
 
+      <div className="sidebar-divider" />
+
+      {/* ----------------------- My Sections (database-backed) ---------------------- */}
+      <div className="sidebar-sections">
+        <div className="sidebar-sections-head">
+          <span>My Sections</span>
+          <a href="#/sections/new" className="sidebar-sections-new" title="Create section" aria-label="Create section" onClick={() => onNavigate?.()}>
+            <Plus size={16} />
+          </a>
+        </div>
+        {!user ? (
+          <a className="nav-item sidebar-login" href="#/login" onClick={() => onNavigate?.()}>
+            <LogIn size={19} />
+            <span>Login to save sections</span>
+          </a>
+        ) : sections.length === 0 ? (
+          <a className="nav-item sidebar-empty" href="#/sections/new" onClick={() => onNavigate?.()}>
+            <Layers size={19} />
+            <span>Create your first section</span>
+          </a>
+        ) : (
+          <nav className="sidebar-nav sidebar-sections-list">
+            {sections.slice(0, 12).map(section => (
+              <a
+                key={section.id}
+                href={`#/sections/${section.id}`}
+                className={`nav-item section-nav-item ${isSectionActive(section.id) ? 'active' : ''}`}
+                onClick={() => onNavigate?.()}
+                title={section.name}
+              >
+                <span className="section-nav-icon">{section.icon}</span>
+                <span className="section-nav-name">{section.name}</span>
+              </a>
+            ))}
+            <a className="nav-item sidebar-manage" href="#/sections" onClick={() => onNavigate?.()}>
+              <Settings2 size={17} />
+              <span>Manage all sections{sections.length > 12 ? ` (${sections.length})` : ''}</span>
+            </a>
+          </nav>
+        )}
+      </div>
+
       <div className="sidebar-lang">
         <span>Language</span>
         <div className="seg" role="group" aria-label="Video language">
@@ -107,8 +174,24 @@ export default function Sidebar({
           />
           <strong>{modeLabel}</strong>
         </div>
-        <p>Hindi aur English videos, ek hi jagah — bina login, sab kuch tumhare browser me.</p>
-        <div className="sidebar-cta">
+        {user ? (
+          <div className="sidebar-user">
+            <span className="sidebar-avatar" aria-hidden="true">{(user.displayName || user.email || 'U').charAt(0).toUpperCase()}</span>
+            <span className="sidebar-user-meta">
+              <strong>{user.displayName || user.email.split('@')[0]}</strong>
+              <small>{user.email}</small>
+            </span>
+            <button className="icon-btn small" onClick={onLogout} title="Logout" aria-label="Logout">
+              <LogOut size={17} />
+            </button>
+          </div>
+        ) : (
+          <a className="sidebar-cta" href="#/login" onClick={() => onNavigate?.()}>
+            <LogIn size={14} />
+            <span>Login / Sign up</span>
+          </a>
+        )}
+        <div className="sidebar-cta static">
           <Sparkles size={14} />
           <span>History, likes &amp; playlists saved locally</span>
         </div>

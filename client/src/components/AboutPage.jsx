@@ -1,4 +1,4 @@
-import { CheckCircle2, Database, KeyRound, Languages, ListVideo, Search, Server, Sparkles } from 'lucide-react';
+import { BookOpen, CheckCircle2, Database, KeyRound, Languages, ListVideo, Search, Server, Sparkles, TrendingUp } from 'lucide-react';
 
 const features = [
   {
@@ -10,6 +10,16 @@ const features = [
     icon: Languages,
     title: 'Hindi + English',
     text: 'relevanceLanguage preference se apni language ke videos pehle.'
+  },
+  {
+    icon: BookOpen,
+    title: 'Audiobooks (human voice)',
+    text: 'Hindi + English audiobooks, 2026 tak — AI voice nahi, sirf human voice.'
+  },
+  {
+    icon: TrendingUp,
+    title: 'Trading (seekhne wali videos)',
+    text: 'Share market, technical/fundamental analysis, candlesticks, options — sirf educational trading videos, 2026 tak.'
   },
   {
     icon: ListVideo,
@@ -35,7 +45,8 @@ export default function AboutPage({ health }) {
         </h1>
         <p>
           Ek YouTube video discovery app — Hindi aur English content, embedded playback, likes, history aur
-          playlists. Koi login nahi, koi database nahi: tumhara data tumhare browser me rehta hai.
+          playlists. Account optional hai: Custom Sections (permanent, database-backed) ke liye login zaroori hai,
+          baaki sab bina login chalta hai. Koi tracking nahi; tumhara data tumhara hai.
         </p>
         <div className="about-status">
           <span

@@ -32,7 +32,7 @@ import VideoCard from './VideoCard';
 import { WatchSkeleton } from './Skeleton';
 import EmptyState from './EmptyState';
 
-export default function WatchPage({ id, language, captionLanguage, onCaptionLanguageChange }) {
+export default function WatchPage({ id, language, topic = 'general', captionLanguage, onCaptionLanguageChange }) {
   const [video, setVideo] = useState(() => getRememberedVideo(id));
   const [related, setRelated] = useState([]);
   const [relatedStatus, setRelatedStatus] = useState('loading');
@@ -98,9 +98,20 @@ export default function WatchPage({ id, language, captionLanguage, onCaptionLang
     setRelatedStatus('loading');
     setRelated([]);
 
+    const isAudiobookTitle = /audio[\s\-]*book|ऑडियो\s*बुक/i.test(video.title || '');
+    const isTradingTitle = /\b(trading|stock\s*market|share\s*market|technical\s*analysis|candlestick)\b/i.test(video.title || '');
+    const relatedTopic =
+      topic === 'trading' || isTradingTitle
+        ? 'trading'
+        : topic === 'audiobook' || isAudiobookTitle
+          ? 'audiobook'
+          : topic === 'bhagwan'
+            ? 'bhagwan'
+            : 'general';
+
     api
       .related(
-        { id, title: video.title, channel: video.channel || '', language, limit: 10 },
+        { id, title: video.title, channel: video.channel || '', language, limit: 10, topic: relatedTopic },
         { signal: controller.signal }
       )
       .then(data => {
@@ -114,7 +125,7 @@ export default function WatchPage({ id, language, captionLanguage, onCaptionLang
       });
 
     return () => controller.abort();
-  }, [id, language, video?.title, video?.channel]);
+  }, [id, language, topic, video?.title, video?.channel]);
 
   useEffect(() => {
     const onPointerDown = event => {

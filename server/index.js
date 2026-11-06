@@ -7,6 +7,15 @@ const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 const youtube = require('./youtube');
+const auth = require('./auth');
+const authRoutes = require('./authRoutes');
+const sectionsRouter = require('./sections');
+
+const db = require('./db');
+
+function dbStatus() {
+  return db.isConfigured() ? 'configured' : 'not-configured';
+}
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -19,6 +28,7 @@ const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173,http
 app.disable('x-powered-by');
 app.use(
   cors({
+    credentials: true,
     origin(origin, callback) {
       if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
       return callback(null, false);
@@ -59,16 +69,22 @@ app.use('/api', (req, res, next) => {
 
 /* --------------------------------- routes -------------------------------- */
 
+app.use('/api', auth.attachUser);
+
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     app: 'SamTube API',
     mode: youtube.mode(),
     hasApiKey: youtube.hasApiKey(),
+    db: dbStatus(),
     uptime: Math.round(process.uptime()),
     time: new Date().toISOString()
   });
 });
+
+app.use('/api/auth', authRoutes);
+app.use('/api', sectionsRouter);
 
 app.get('/api/videos', async (req, res, next) => {
   try {
@@ -104,7 +120,8 @@ app.get('/api/related/:id', async (req, res, next) => {
       title: req.query.title,
       channel: req.query.channel,
       language: req.query.language,
-      limit: req.query.limit
+      limit: req.query.limit,
+      topic: req.query.topic
     });
     res.json(result);
   } catch (error) {

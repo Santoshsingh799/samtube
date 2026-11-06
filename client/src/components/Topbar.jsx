@@ -127,7 +127,7 @@ export default function Topbar({
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          placeholder={topic === 'bhagwan' ? 'Mahabharat, Ramayan, Geeta खोजें…' : language === 'hi' ? 'वीडियो खोजें…' : 'Search videos…'}
+          placeholder={topic === 'bhagwan' ? 'Mahabharat, Ramayan, Geeta खोजें…' : topic === 'audiobook' ? 'Audiobook खोजें — human voice only…' : topic === 'trading' ? 'Trading खोजें — share market, analysis, options…' : language === 'hi' ? 'वीडियो खोजें…' : 'Search videos…'}
           aria-label="Search videos"
           autoComplete="off"
         />

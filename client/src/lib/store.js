@@ -67,6 +67,8 @@ export const prefsStore = createStore('prefs', {
   sort: 'smart',
   topic: 'general'
 });
+// Local cache of the signed-in user (source of truth is the httpOnly session cookie + /api/auth/me)
+export const userStore = createStore('session_user', null);
 export const historyStore = createStore('history', []);
 export const likedStore = createStore('liked', []);
 export const playlistsStore = createStore('playlists', []);
@@ -79,6 +81,11 @@ export const usePrefs = () => useStore(prefsStore);
 export const useHistory = () => useStore(historyStore);
 export const useLikes = () => useStore(likedStore);
 export const usePlaylists = () => useStore(playlistsStore);
+export const useUser = () => useStore(userStore);
+
+export function setUser(user) {
+  userStore.set(user || null);
+}
 
 export function slimVideo(video) {
   return {

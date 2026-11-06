@@ -7,13 +7,18 @@ import LibraryPage from './components/LibraryPage';
 import PlaylistsPage from './components/PlaylistsPage';
 import PlaylistDetailPage from './components/PlaylistDetailPage';
 import AboutPage from './components/AboutPage';
+import AuthPage from './components/AuthPage';
+import SectionsPage from './components/SectionsPage';
+import SectionBuilder from './components/SectionBuilder';
+import SectionFeedPage from './components/SectionFeedPage';
 import { api } from './lib/api';
 import { navigate, useHashRoute } from './lib/router';
-import { setPreference, usePrefs } from './lib/store';
+import { setPreference, setUser, usePrefs, useUser } from './lib/store';
 
 export default function App() {
   const route = useHashRoute();
   const prefs = usePrefs();
+  const user = useUser();
   const [searchText, setSearchText] = useState('');
   const [query, setQuery] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -46,6 +51,16 @@ export default function App() {
       clearInterval(timer);
       controller.abort();
     };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    api.me().then(data => {
+      if (active) setUser(data.user);
+    }).catch(() => {
+      if (active) setUser(null);
+    });
+    return () => { active = false; };
   }, []);
 
   useLayoutEffect(() => {
@@ -105,10 +120,41 @@ export default function App() {
     navigate('/');
   }, []);
 
+  const handleAudiobook = useCallback(() => {
+    setPreference('topic', 'audiobook');
+    setPreference('category', 'All');
+    setQuery('');
+    setSearchText('');
+    setRefreshKey(value => value + 1);
+    navigate('/');
+  }, []);
+
+  const handleTrading = useCallback(() => {
+    setPreference('topic', 'trading');
+    setPreference('category', 'All');
+    setQuery('');
+    setSearchText('');
+    setRefreshKey(value => value + 1);
+    navigate('/');
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await api.logout();
+    } finally {
+      setUser(null);
+      navigate('/');
+    }
+  }, []);
+
   const handleClearQuery = useCallback(() => {
     setQuery('');
     setRefreshKey(value => value + 1);
   }, []);
+
+  const sectionsRoute = ['sections', 'section-builder', 'section-feed'].includes(route.view);
+  // Sections are database-backed and per-user — send anonymous visitors to login.
+  const needsAuth = sectionsRoute && !user;
 
   return (
     <div className="app-shell">
@@ -129,11 +175,15 @@ export default function App() {
           open={sidebarOpen}
           language={language}
           topic={topic}
+          user={user}
           onLanguageChange={handleLanguage}
           onNavigate={() => setSidebarOpen(false)}
           onHome={handleHome}
           onExplore={handleExplore}
           onBhagwan={handleBhagwan}
+          onAudiobook={handleAudiobook}
+          onTrading={handleTrading}
+          onLogout={handleLogout}
         />
         {sidebarOpen ? (
           <button className="mobile-scrim" onClick={() => setSidebarOpen(false)} aria-label="Close menu" />
@@ -162,10 +212,17 @@ export default function App() {
               key={route.id}
               id={route.id}
               language={language}
+              topic={topic}
               captionLanguage={captionLanguage}
               onCaptionLanguageChange={value => setPreference('captionLanguage', value)}
             />
           ) : null}
+
+          {route.view === 'login' ? <AuthPage /> : null}
+          {needsAuth ? <AuthPage /> : null}
+          {!needsAuth && route.view === 'sections' ? <SectionsPage /> : null}
+          {!needsAuth && route.view === 'section-builder' ? <SectionBuilder key={route.id || 'new'} id={route.id} /> : null}
+          {!needsAuth && route.view === 'section-feed' ? <SectionFeedPage key={route.id} id={route.id} /> : null}
 
           {route.view === 'history' ? <LibraryPage type="history" /> : null}
           {route.view === 'liked' ? <LibraryPage type="liked" /> : null}

@@ -12,6 +12,11 @@ function parseHash(hash) {
   if (parts[0] === 'playlists') return { view: 'playlists' };
   if (parts[0] === 'playlist' && parts[1]) return { view: 'playlist', id: parts[1] };
   if (parts[0] === 'about') return { view: 'about' };
+  if (parts[0] === 'login') return { view: 'login' };
+  if (parts[0] === 'sections' && !parts[1]) return { view: 'sections' };
+  if (parts[0] === 'sections' && parts[1] === 'new') return { view: 'section-builder', id: null };
+  if (parts[0] === 'sections' && parts[1] && parts[2] === 'edit') return { view: 'section-builder', id: parts[1] };
+  if (parts[0] === 'sections' && parts[1]) return { view: 'section-feed', id: parts[1] };
   return { view: 'home' };
 }
 

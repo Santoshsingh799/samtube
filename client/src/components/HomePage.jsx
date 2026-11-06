@@ -33,6 +33,36 @@ export const BHAGWAN_SUBTOPICS = [
   { label: 'Hanuman', query: 'Hanuman Hindi' }
 ];
 
+export const AUDIOBOOK_SUBTOPICS = [
+  { label: '🎧 सभी', query: '' },
+  { label: 'Hindi Upanyas', query: 'Hindi upanyas audiobook full' },
+  { label: 'Hindi Kahaniyan', query: 'Hindi kahani audiobook full' },
+  { label: 'Premchand', query: 'Munshi Premchand audiobook Hindi' },
+  { label: 'Classic Novels', query: 'classic literature audiobook full' },
+  { label: 'English Novels', query: 'audiobook full novel unabridged' },
+  { label: 'Detective / Mystery', query: 'Mystery audiobook full unabridged' },
+  { label: 'Horror / Thriller', query: 'Horror audiobook full' },
+  { label: 'History / Biography', query: 'History audiobook full' },
+  { label: 'Self Help', query: 'Self help audiobook full' },
+  { label: 'Mahabharat / Ramayan', query: 'Mahabharat audiobook Hindi narration full' }
+];
+
+export const TRADING_SUBTOPICS = [
+  { label: '📈 सभी', query: '' },
+  { label: 'Share Market Basics', query: 'stock market basics' },
+  { label: 'Technical Analysis', query: 'technical analysis tutorial' },
+  { label: 'Fundamental Analysis', query: 'fundamental analysis course' },
+  { label: 'Candlestick Charts', query: 'candlestick pattern explained' },
+  { label: 'Chart Patterns', query: 'chart patterns explained' },
+  { label: 'Price Action', query: 'price action trading' },
+  { label: 'Intraday Trading', query: 'intraday trading strategy' },
+  { label: 'Swing Trading', query: 'swing trading strategy' },
+  { label: 'Options Trading', query: 'options trading for beginners' },
+  { label: 'Futures Trading', query: 'futures trading explained' },
+  { label: 'Nifty / Sensex', query: 'Nifty Sensex trading' },
+  { label: 'Risk Management', query: 'risk management trading' }
+];
+
 export default function HomePage({
   query,
   language = 'all',
@@ -59,12 +89,15 @@ export default function HomePage({
   const notify = useToast();
 
   const isBhagwan = topic === 'bhagwan';
-  const effectiveQuery = isBhagwan && !query ? subtopic : query;
-  const activeCategory = isBhagwan ? 'All' : category;
+  const isAudiobook = topic === 'audiobook';
+  const isTrading = topic === 'trading';
+  const isSpecial = isBhagwan || isAudiobook || isTrading;
+  const effectiveQuery = isSpecial && !query ? subtopic : query;
+  const activeCategory = isSpecial ? 'All' : category;
 
   useEffect(() => {
-    if (!isBhagwan) setSubtopic('');
-  }, [isBhagwan, refreshKey]);
+    setSubtopic('');
+  }, [topic, refreshKey]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -128,23 +161,31 @@ export default function HomePage({
     return () => observer.disconnect();
   }, [nextToken, loadMore, status]);
 
-  const heading = isBhagwan
-    ? 'ॐ Bhagwan Shows & Videos'
-    : query
-      ? `Results for “${query}”`
-      : language === 'hi'
-        ? 'हिंदी वीडियो'
-        : language === 'en'
-          ? 'English videos'
-          : 'Hindi + English videos';
+  const heading = isTrading
+    ? '📈 Trading — Seekhein Step by Step'
+    : isAudiobook
+      ? '🎧 Audiobooks — Human Voice Only'
+      : isBhagwan
+        ? 'ॐ Bhagwan Shows & Videos'
+        : query
+          ? `Results for “${query}”`
+          : language === 'hi'
+            ? 'हिंदी वीडियो'
+            : language === 'en'
+              ? 'English videos'
+              : 'Hindi + English videos';
 
-  const languageLabel = isBhagwan
-    ? 'ॐ Bhagwan — Mahabharat • Ramayan • Upanishad'
-    : language === 'hi'
-      ? 'हिंदी preference'
-      : language === 'en'
-        ? 'English preference'
-        : 'हिंदी + English mix';
+  const languageLabel = isTrading
+    ? '📈 Trading — Share Market Seekhein • Hindi + English'
+    : isAudiobook
+      ? '🎧 Audiobooks — Hindi + English • No AI voice'
+      : isBhagwan
+        ? 'ॐ Bhagwan — Mahabharat • Ramayan • Upanishad'
+        : language === 'hi'
+          ? 'हिंदी preference'
+          : language === 'en'
+            ? 'English preference'
+            : 'हिंदी + English mix';
 
   return (
     <div className="page">
@@ -155,8 +196,11 @@ export default function HomePage({
             Watch what you <em>love.</em>
           </h1>
           <p className="hero-sub">
-            Hindi aur English videos — sirf 2023 se pehle wali purani videos, educational pehle. Search, watch,
-            like karo aur apni playlists banao.
+            {isTrading
+              ? 'Sirf trading sikhne wali videos — share market, technical & fundamental analysis, candlesticks, options, risk management. Hindi aur English. Live market tips / paid course / telegram scam wale hata diye jaate hain.'
+              : isAudiobook
+                ? 'Hindi aur English audiobooks — 2026 tak (aaj tak ki sari), sirf human voice wali. AI voice / AI-generated audiobooks bilkul nahi.'
+                : 'Hindi aur English videos — sirf 2023 se pehle wali purani videos, educational pehle. Search, watch, like karo aur apni playlists banao.'}
           </p>
           <div className="hero-chips">
             <span className="chip">
@@ -177,12 +221,16 @@ export default function HomePage({
               <Languages size={14} />
               {languageLabel}
             </span>
-            <span className="chip" title="Sirf 2023 se pehle ki videos">
-              🕰️ 2023 se pehle only
+            <span className="chip" title={isAudiobook ? 'Audiobooks: 2026 tak ki sari books' : isTrading ? 'Trading videos: 2026 tak ki sari' : 'Sirf 2023 se pehle ki videos'}>
+              {isAudiobook ? '📚 2026 tak • aaj tak sari' : isTrading ? '📈 2026 tak • aaj tak sab' : '🕰️ 2023 se pehle only'}
             </span>
-            <span className="chip">
-              <Sparkles size={14} />
-              No login needed
+            <span className="chip" title={isAudiobook ? 'Sirf human voice — AI voice nahi' : isTrading ? 'Educational trading only — tips/scam nahi' : 'No login needed'}>
+              {isAudiobook ? '🎙️ Human voice only • No AI voice' : isTrading ? '🎓 Sirf seekhne wali videos' : (
+                <>
+                  <Sparkles size={14} />
+                  No login needed
+                </>
+              )}
             </span>
           </div>
         </div>
@@ -227,12 +275,32 @@ export default function HomePage({
           >
             <span aria-hidden="true">ॐ</span> Bhagwan
           </button>
+
+          <button
+            type="button"
+            className={`audio-tab ${isAudiobook ? 'selected' : ''}`}
+            onClick={() => onTopicChange?.(isAudiobook ? 'general' : 'audiobook')}
+            aria-pressed={isAudiobook}
+            title="Hindi + English audiobooks, 2026 tak — sirf human voice, AI voice nahi"
+          >
+            <span aria-hidden="true">🎧</span> Audiobooks
+          </button>
+
+          <button
+            type="button"
+            className={`trading-tab ${isTrading ? 'selected' : ''}`}
+            onClick={() => onTopicChange?.(isTrading ? 'general' : 'trading')}
+            aria-pressed={isTrading}
+            title="Share market, technical & fundamental analysis, candlesticks — sirf trading seekhne wali videos, 2026 tak"
+          >
+            <span aria-hidden="true">📈</span> Trading
+          </button>
         </div>
 
         <label className="sort-control">
           <span>Sort</span>
           <select value={sort} onChange={event => onSortChange?.(event.target.value)} aria-label="Sort videos">
-            <option value="smart">Educational + older</option>
+            <option value="smart">{isAudiobook ? 'Smart (books first)' : isTrading ? 'Smart (learning first)' : 'Educational + older'}</option>
             <option value="oldest">Oldest first</option>
             <option value="newest">Newest first</option>
           </select>
@@ -240,9 +308,13 @@ export default function HomePage({
       </div>
 
       <p className="filter-note">
-        {isBhagwan
-          ? 'Bhagwan mode: Mahabharat, Ramayan, Upanishad, Ganga, Geeta, Krishna, Shiv, Hanuman — sirf 2023 se pehle wali videos. AI/template/logo wale hate hue.'
-          : 'Sirf 2023 se pehle wali purani videos — AI-generated, template, logo, intro aur status videos hata diye jaate hain. Educational videos pehle.'}
+        {isTrading
+          ? 'Trading mode: sirf trading-SIKHNE wali videos — share market basics, technical & fundamental analysis, candlestick charts, chart patterns, intraday, swing, options, futures, risk management. Hindi + English, 2026 tak. Sure-shot tips, guaranteed profit aur paid telegram/WhatsApp groups wale hata diye jaate hain. Language filter: All = Hindi + English mix.'
+          : isAudiobook
+            ? 'Audiobooks mode: Hindi + English, 2026 tak (aaj tak ki sari books) — sirf human voice wali. AI voice / AI-generated / TTS audiobooks hata diye jaate hain. Language filter: All = Hindi + English mix.'
+            : isBhagwan
+              ? 'Bhagwan mode: Mahabharat, Ramayan, Upanishad, Ganga, Geeta, Krishna, Shiv, Hanuman — sirf 2023 se pehle wali videos. AI/template/logo wale hate hue.'
+              : 'Sirf 2023 se pehle wali purani videos — AI-generated, template, logo, intro aur status videos hata diye jaate hain. Educational videos pehle.'}
       </p>
 
       {isBhagwan ? (
@@ -253,6 +325,34 @@ export default function HomePage({
               role="tab"
               aria-selected={subtopic === item.query}
               className={`category-chip ${subtopic === item.query ? 'selected bhagwan-chip' : ''}`}
+              onClick={() => setSubtopic(item.query)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : isAudiobook ? (
+        <div className="category-row audio-row" role="tablist" aria-label="Audiobook subtopics">
+          {AUDIOBOOK_SUBTOPICS.map(item => (
+            <button
+              key={item.label}
+              role="tab"
+              aria-selected={subtopic === item.query}
+              className={`category-chip ${subtopic === item.query ? 'selected audio-chip' : ''}`}
+              onClick={() => setSubtopic(item.query)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : isTrading ? (
+        <div className="category-row trading-row" role="tablist" aria-label="Trading subtopics">
+          {TRADING_SUBTOPICS.map(item => (
+            <button
+              key={item.label}
+              role="tab"
+              aria-selected={subtopic === item.query}
+              className={`category-chip ${subtopic === item.query ? 'selected trading-chip' : ''}`}
               onClick={() => setSubtopic(item.query)}
             >
               {item.label}
@@ -279,10 +379,18 @@ export default function HomePage({
         <div>
           <h2>{heading}</h2>
           <p>
-            {isBhagwan
+            {isTrading
               ? subtopic
-                ? `${subtopic} · purani videos pehle · YouTube se`
-                : 'Mahabharat • Ramayan • Upanishad • Ganga • Geeta • Krishna • Shiv · YouTube se'
+                ? `${subtopic} · trading seekhein · 2026 tak · YouTube se`
+                : 'Share Market · Technical Analysis · Options · Risk Management · YouTube se'
+              : isAudiobook
+                ? subtopic
+                  ? `${subtopic} · human voice only · 2026 tak · YouTube se`
+                  : 'Hindi + English audiobooks · human voice only · 2026 tak · YouTube se'
+              : isBhagwan
+                ? subtopic
+                  ? `${subtopic} · purani videos pehle · YouTube se`
+                  : 'Mahabharat • Ramayan • Upanishad • Ganga • Geeta • Krishna • Shiv · YouTube se'
               : query || category !== 'All'
                 ? `${[query, category !== 'All' ? category : ''].filter(Boolean).join(' • ')} · YouTube se`
                 : 'YouTube se discover kiye gaye videos'}
@@ -297,6 +405,16 @@ export default function HomePage({
           {isBhagwan && subtopic ? (
             <button className="btn btn-ghost small" onClick={() => setSubtopic('')}>
               Sab Bhagwan videos
+            </button>
+          ) : null}
+          {isTrading && subtopic ? (
+            <button className="btn btn-ghost small" onClick={() => setSubtopic('')}>
+              Sab Trading videos
+            </button>
+          ) : null}
+          {isAudiobook && subtopic ? (
+            <button className="btn btn-ghost small" onClick={() => setSubtopic('')}>
+              Sab Audiobooks
             </button>
           ) : null}
           <span className="result-count">{videos.length} loaded</span>
@@ -336,13 +454,19 @@ export default function HomePage({
       {status === 'ready' && !videos.length ? (
         <EmptyState
           icon={<SearchX size={30} />}
-          title="2023 se pehle wali video nahi mili"
-          message="SamTube me sirf 2023 se pehle wali videos dikhti hain. Search badal ke dekho — ya Bhagwan tab me purane shows kholo."
+          title={isTrading ? 'Trading seekhne wali video nahi mili' : isAudiobook ? 'Human voice audiobook nahi mili' : '2023 se pehle wali video nahi mili'}
+          message={
+            isTrading
+              ? 'Sure-shot tips / paid telegram wale hata diye gaye hain — sirf educational trading videos dikhte hain. Search badal ke dekho, ya language ko All par rakho.'
+              : isAudiobook
+                ? 'AI voice wali audiobooks hata di gayi hain — sirf human voice wali dikhti hain. Search badal ke dekho, ya language ko All par rakho.'
+                : 'SamTube me sirf 2023 se pehle wali videos dikhti hain. Search badal ke dekho — ya Bhagwan tab me purane shows kholo.'
+          }
           actionLabel="Sare filters hatao"
           onAction={() => {
             onClearQuery();
             onCategoryChange('All');
-            if (isBhagwan) {
+            if (isSpecial) {
               setSubtopic('');
             }
           }}

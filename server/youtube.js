@@ -36,6 +36,149 @@ const BHAGWAN_QUERIES_EN = [
   'Shiv Vishnu Hanuman documentary'
 ];
 
+// Audiobooks: Hindi + English, 2026 tak (aaj tak ki sari), SIRF human voice.
+// AI voice / AI-generated audiobooks are hard-blocked in rankVideos (isAiVoice).
+const AUDIOBOOK_QUERIES_HI = [
+  'Hindi audiobook full novel',
+  'Hindi upanyas audiobook full',
+  'Hindi kahani audiobook full',
+  'Hindi classic novel audiobook',
+  'Munshi Premchand audiobook Hindi',
+  'Hindi sahitya audiobook full',
+  'Hindi detective novel audiobook',
+  'Hindi thriller novel audiobook',
+  'Hindi history audiobook full',
+  'Hindi biography audiobook',
+  'Chanakya Neeti audiobook Hindi',
+  'Panchtantra kahaniyan audiobook Hindi',
+  'Akbar Birbal kahani audiobook Hindi',
+  'Shivaji audiobook Hindi full',
+  'Mahabharat audiobook Hindi narration full',
+  'Ramayan audiobook Hindi full',
+  'Geeta audiobook Hindi full',
+  'Hindi upanyas part 1 audiobook',
+  'Hindi audio book complete book',
+  'हिंदी ऑडियो बुक उपन्यास पूर्ण',
+  'हिंदी कहानी ऑडियो बुक पूर्ण',
+  'हिंदी साहित्य ऑडियो बुक',
+  'प्रेमचंद ऑडियो बुक हिंदी'
+];
+
+const AUDIOBOOK_QUERIES_EN = [
+  'audiobook full novel unabridged',
+  'audiobook full book human narration',
+  'classic literature audiobook full',
+  'Sherlock Holmes audiobook full',
+  'Alice in Wonderland audiobook full',
+  'Pride and Prejudice audiobook full',
+  'Jane Austen audiobook full',
+  'Charles Dickens audiobook full',
+  'Mark Twain audiobook full',
+  'Oscar Wilde audiobook full',
+  'Edgar Allan Poe audiobook full',
+  'Mystery audiobook full unabridged',
+  'Thriller audiobook full',
+  'Horror audiobook full',
+  'Science fiction audiobook full',
+  'Biography audiobook full',
+  'Self help audiobook full',
+  'History audiobook full',
+  'Philosophy audiobook full',
+  'English audiobook complete book',
+  'English novel audiobook full',
+  'Classic novel audiobook part 1'
+];
+
+// Trading lane: sirf trading-SIKHNE wali videos (share market education), Hindi + English,
+// 2026 tak (aaj tak ki sari). Stock tips / paid-course / telegram spam are hard-blocked in rankVideos.
+const TRADING_QUERIES_HI = [
+  'share market kaise seekhe Hindi',
+  'stock market basics Hindi full',
+  'stock market for beginners Hindi',
+  'trading kaise kare seekhe Hindi',
+  'technical analysis Hindi full course',
+  'fundamental analysis Hindi full',
+  'candlestick pattern Hindi',
+  'chart patterns Hindi',
+  'intraday trading Hindi course',
+  'swing trading Hindi',
+  'options trading Hindi full',
+  'futures trading Hindi explained',
+  'Nifty Sensex kaise seekhe Hindi',
+  'support and resistance Hindi',
+  'moving average Hindi trading',
+  'risk management trading Hindi',
+  'stock investing vs trading Hindi',
+  'share bazaar seekhen Hindi',
+  'शेयर मार्केट सीखें हिंदी',
+  'ट्रेडिंग सीखें हिंदी',
+  'टेक्निकल एनालिसिस हिंदी',
+  'कैंडलस्टिक चार्ट हिंदी'
+];
+
+const TRADING_QUERIES_EN = [
+  'stock market for beginners full course',
+  'technical analysis full course',
+  'fundamental analysis full course',
+  'how to read candlestick charts',
+  'chart patterns explained',
+  'day trading for beginners',
+  'swing trading strategy full',
+  'options trading for beginners full',
+  'futures trading explained',
+  'support and resistance trading',
+  'moving average trading strategy',
+  'risk management trading full',
+  'technical analysis tutorial full',
+  'stock market basics education',
+  'investing vs trading explained',
+  'how to start trading stocks',
+  'volume analysis trading',
+  'price action trading full course',
+  'stock market education beginners',
+  'options trading explained full'
+];
+
+const AUDIOBOOK_SUGGESTIONS = [
+  'Hindi audiobook full novel',
+  'Hindi upanyas audiobook',
+  'Hindi kahani audiobook',
+  'Premchand audiobook Hindi',
+  'Munshi Premchand audiobook',
+  'Chanakya audiobook Hindi',
+  'Panchtantra audiobook',
+  'Akbar Birbal audiobook',
+  'Mahabharat audiobook Hindi',
+  'Ramayan audiobook Hindi',
+  'audiobook full novel',
+  'audiobook full book',
+  'classic literature audiobook',
+  'Sherlock Holmes audiobook',
+  'Jane Austen audiobook',
+  'Mystery audiobook full',
+  'Horror audiobook full',
+  'Biography audiobook full'
+];
+
+const TRADING_SUGGESTIONS = [
+  'share market basics Hindi',
+  'stock market for beginners Hindi',
+  'technical analysis Hindi',
+  'fundamental analysis Hindi',
+  'candlestick pattern Hindi',
+  'chart patterns Hindi',
+  'intraday trading Hindi',
+  'swing trading Hindi',
+  'options trading Hindi',
+  'risk management trading Hindi',
+  'stock market for beginners',
+  'technical analysis tutorial',
+  'fundamental analysis course',
+  'candlestick charts explained',
+  'options trading for beginners',
+  'swing trading strategy'
+];
+
 // General home feed curated lanes (Hackertube-style): several old-leaning documentary lanes merged.
 // Generic "science documentary" alone returns mostly recent videos, so we fan-out
 // to channel/show queries whose back catalog has pre-2023 episodes.
@@ -248,11 +391,65 @@ const DEVANAGARI = /[\u0900-\u097F]/;
 const BEFORE_2023_TS = Date.UTC(2023, 0, 1);
 const BEFORE_2023_DAYS = Math.max(0, Math.floor((Date.now() - BEFORE_2023_TS) / DAY_MS));
 
+// Audiobooks exception: 2026 tak (aaj tak ki sari books) — allow everything up to 2026-12-31.
+const BEFORE_2027_TS = Date.UTC(2027, 0, 1);
+const BEFORE_2027_DAYS = Math.max(0, Math.floor((Date.now() - BEFORE_2027_TS) / DAY_MS));
+
 function isBefore2023(video) {
   const ts = video.publishedAt ? Date.parse(video.publishedAt) : NaN;
   if (Number.isFinite(ts)) return ts < BEFORE_2023_TS;
   if (video.ageDays !== null && video.ageDays !== undefined) return video.ageDays >= BEFORE_2023_DAYS;
   return false; // unknown date = cannot prove pre-2023, so exclude under strict rule
+}
+
+function isBefore2027(video) {
+  const ts = video.publishedAt ? Date.parse(video.publishedAt) : NaN;
+  if (Number.isFinite(ts)) return ts < BEFORE_2027_TS;
+  if (video.ageDays !== null && video.ageDays !== undefined) return video.ageDays >= BEFORE_2027_DAYS;
+  // Unknown date: allow for audiobooks (aaj tak ki sari) — ranking will deprioritize but not exclude.
+  return true;
+}
+
+// Strict AI-voice markers (audiobooks + general): TTS, computer/robot/synthetic voice, AI reader/narrator.
+const AI_VOICE_PATTERNS = [
+  /\b(ai[\s\-]*voice|voice[\s\-]*by\s*ai|ai[\s\-]*narrat|ai[\s\-]*reader|ai\s+reader|ai\s+narrator|text[\s\-]*to[\s\-]*speech|\btts\b|computer[\s\-]*voice|robot\s+voice|synthetic\s+voice|machine\s+voice|generated\s+voice|voice\s+generated|ai\s+read)\b/i,
+  /एआई\s*(आवाज|वॉइस|वाइस|नैरेशन)|कंप्यूटर\s*आवाज|रोबोट\s*आवाज|मशीन\s*आवाज|एआई\s*से\s*पढ़ी|एआई\s*द्वारा\s*पढ़ी/i
+];
+
+// Audiobook signals: strong = audiobook term, medium = full book / narration.
+const AUDIOBOOK_PATTERNS = [
+  /\b(audio[\s\-]*book|audio[\s\-]*books)\b/i,
+  /ऑडियो\s*बुक/i,
+  /\b(full\s+book|complete\s+book|full\s+novel|unabridged)\b/i,
+  /\b(narrat(ed|ion|or)?|read\s+by|narrated\s+by)\b/i,
+  /(उपन्यास|upanyas).*(full|पूरा|पूर्ण)/i,
+  /(full|पूरा|पूर्ण).*(उपन्यास|upanyas)/i
+];
+
+const TRUSTED_AUDIOBOOK_CHANNEL =
+  /(librivox|audible|penguin|harpercollins|hachette|bbc\s*audio|storytel|juggernaut|kavach|katha\s*sagar|kathakar|lok\s*katha|sahitya|kahani\s*adda|story\s*time\s*hindi)/i;
+
+const TRUSTED_HUMAN_NARRATOR =
+  /(librivox|penguin|harpercollins|audible|hachette|bbc\s*audio|storytel|juggernaut|katha\s*sagar|kathakar|lok\s*katha|sahitya\s*kendra|deepak\s*ranjan|narrated\s+by|read\s+by|voice\s+of|human\s+voice|real\s+voice)/i;
+
+// Known AI-voice audiobook farm channels (screenshot: Elite Audiobooks, BetterSelf,
+// AudioBook Rise, Elite Audio Library, Audiobook Everyday + generic variants).
+// These mass-produce TTS/audiobook spam — user wants HUMAN voice only, so hard-block.
+const AI_FARM_CHANNEL =
+  /(elite\s*audiobooks?|elite\s*audio\s*library|better\s*self\s*audiobooks?|betterself\s*audiobooks?|audiobooks?\s*rise|audiobooks?\s*everyday|audiobooks?\s*daily|audiobooks?\s*adda|audiobooks?\s*hub|audiobooks?\s*world\s*audiobooks?|audio\s*library\s*audiobooks?|audiobooks?\s*daily)/i;
+
+function isAiFarmChannel(channel) {
+  return AI_FARM_CHANNEL.test(String(channel || ''));
+}
+
+function parseDurationSeconds(text) {
+  if (!text || typeof text !== 'string') return null;
+  const parts = text.trim().split(':').map(value => Number(value));
+  if (parts.some(value => !Number.isFinite(value))) return null;
+  if (parts.length === 1) return parts[0];
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  return null;
 }
 
 // AI-generated / synthetic spam + editing templates, status/ringtone spam, logo/intro packs.
@@ -280,7 +477,10 @@ const BLOCKED_PATTERNS = [
   // Hindi: AI-generated / template / spam markers
   /(टेम्पलेट|टेम्प्लेट|इंट्रो|आउट्रो|मोशन ग्राफिक्स|ग्रीन स्क्रीन|स्टॉक फुटेज|कॉपीराइट फ्री|रॉयल्टी फ्री|व्हाट्सएप स्टेटस|स्टेटस वीडियो|रिंगटोन|लोगो एनिमेशन|फ्री डाउनलोड)/i,
   /(एआई|ए आई|चैटजीपीटी|चैट जीपीटी|ai).*(से\s*बनी|से\s*बना|से\s*बनाई|से\s*बनाया|द्वारा\s*बनी|द्वारा\s*बनाई|जनरेटेड|निर्मित|कहानी|कथा|भजन| kahani|katha|स्टोरी|सोरी|story)/i,
-  /(एआई\s*से|एआई\s*द्वारा)/i
+  /(एआई\s*से|एआई\s*द्वारा)/i,
+  // AI voice: TTS / computer / robot / synthetic / AI reader — human voice only (audiobook strict)
+  /\b(ai[\s\-]*voice|voice[\s\-]*by\s*ai|ai[\s\-]*narrat|ai[\s\-]*reader|ai\s+reader|ai\s+narrator|text[\s\-]*to[\s\-]*speech|\btts\b|computer[\s\-]*voice|robot\s+voice|synthetic\s+voice|machine\s+voice|generated\s+voice|voice\s+generated)\b/i,
+  /एआई\s*(आवाज|वॉइस|वाइस|नैरेशन)|कंप्यूटर\s*आवाज|रोबोट\s*आवाज|मशीन\s*आवाज|एआई\s*से\s*पढ़ी|एआई\s*द्वारा\s*पढ़ी/i
 ];
 
 // Signals that a video is educational / documentary style.
@@ -301,26 +501,66 @@ const BHAGWAN_PATTERNS = [
 ];
 
 const BLOCKED_SUGGESTIONS =
-  /(templates?|intros?|outros?|green screen|stock footage|copyright free|no copyright|royalty free|motion graphics|after effects|premiere pro|capcut|alight motion|kinemaster|ringtone|whatsapp status|status video|ai generated|ai video|ai story|ai kahani|ai katha|ai bhajan|ai se bani|made by ai|chatgpt|logo animation|free download|टेम्पलेट|इंट्रो|रिंगटोन|स्टेटस|मोशन ग्राफिक्स|ग्रीन स्क्रीन|कॉपीराइट फ्री|फ्री डाउनलोड|एआई से बनी|एआई कहानी)/i;
+  /(templates?|intros?|outros?|green screen|stock footage|copyright free|no copyright|royalty free|motion graphics|after effects|premiere pro|capcut|alight motion|kinemaster|ringtone|whatsapp status|status video|ai generated|ai video|ai story|ai kahani|ai katha|ai bhajan|ai se bani|made by ai|chatgpt|logo animation|free download|ai voice|ai narrator|ai reader|text to speech|tts|computer voice|robot voice|टेम्पलेट|इंट्रो|रिंगटोन|स्टेटस|मोशन ग्राफिक्स|ग्रीन स्क्रीन|कॉपीराइट फ्री|फ्री डाउनलोड|एआई से बनी|एआई कहानी|एआई आवाज|एआई वॉइस)/i;
 
 function textOf(video) {
   return `${video.title || ''} ${video.channel || ''} ${video.description || ''}`;
 }
 
+function isAiVoice(video) {
+  if (isAiFarmChannel(video.channel)) return true;
+  const haystack = `${video.title || ''} ${video.channel || ''} ${video.description || ''}`;
+  return AI_VOICE_PATTERNS.some(pattern => pattern.test(haystack));
+}
+
+function isAudiobook(video) {
+  const haystack = textOf(video);
+  return AUDIOBOOK_PATTERNS.some(pattern => pattern.test(haystack));
+}
+
+function audiobookScore(video) {
+  let score = 0;
+  if (isAudiobook(video)) score += 5;
+  if (TRUSTED_AUDIOBOOK_CHANNEL.test(textOf(video))) score += 3;
+  if (TRUSTED_HUMAN_NARRATOR.test(textOf(video))) score += 3;
+  if (isAiFarmChannel(video.channel)) score -= 50; // hard deprioritize (kept blocked anyway)
+  if (educationScore(video) > 0) score += 1;
+  const secs = parseDurationSeconds(video.duration);
+  if (secs !== null) {
+    if (secs >= 3600) score += 3;
+    else if (secs >= 1800) score += 2;
+    else if (secs >= 900) score += 1;
+    else if (secs < 300) score -= 2;
+  }
+  return score;
+}
+
+function audiobookAgeBonus(video) {
+  const age = video.ageDays;
+  if (age === null || age === undefined) return 0;
+  if (age < 7) return 0; // new human-voice audiobooks (2026 tak) are welcome
+  if (age < 30) return 1;
+  if (age < 365) return 2;
+  if (age < 1825) return 2;
+  return 1;
+}
+
 function isBlocked(video, { category = '' } = {}) {
+  if (isAiFarmChannel(video.channel)) return true;
   const haystack = `${video.title || ''} ${video.channel || ''}`;
   if (BLOCKED_PATTERNS.some(pattern => pattern.test(haystack))) return true;
+  if (isAiVoice(video)) return true;
   // AI-channel farm: channel name itself advertises AI (e.g. "Sanatan Legends AI", "ai_ki_duniya")
   // Exempt the AI category pile — there users *want* educational videos about AI.
   if (!/^(ai|artificial intelligence)$/i.test(category)) {
     const channel = String(video.channel || '');
     if (/\b(ai)\b/i.test(channel) && /\b(ai|a\.i\.)\b/i.test(channel)) return true;
-    if (/(_ai\b|\bai_|\bai\b)/i.test(channel) && /(story|kahani|katha|bhajan|hindi|legends|world|duniya|hub|voice)/i.test(channel)) return true;
+    if (/(_ai\b|\bai_|\bai\b)/i.test(channel) && /(story|kahani|katha|bhajan|hindi|legends|world|duniya|hub|voice|audiobook|book|read)/i.test(channel)) return true;
     if (/_ai(_|0|1|2|3)/i.test(channel)) return true;
   }
   // Strong AI disclosure hidden in description (e.g. "created with AI / ChatGPT")
   const desc = video.description || '';
-  if (/\b(ai\s*generated|made\s*with\s*ai|created\s*with\s*ai|generated\s*by\s*ai|chatgpt|midjourney|deepfake|synthetic\s*media)\b/i.test(desc)) return true;
+  if (/\b(ai\s*generated|made\s*with\s*ai|created\s*with\s*ai|generated\s*by\s*ai|chatgpt|midjourney|deepfake|synthetic\s*media|text[\s\-]*to[\s\-]*speech|\btts\b)\b/i.test(desc)) return true;
   if (/एआई\s*(से\s*बनी|से\s*बना|द्वारा)/i.test(desc)) return true;
   return false;
 }
@@ -332,6 +572,59 @@ function educationScore(video) {
     if (pattern.test(haystack)) score += 2;
   }
   if (TRUSTED_CHANNEL.test(haystack)) score += 3;
+  return score;
+}
+
+// Trading-learning signals: only share-market EDUCATION content belongs here.
+// Pure market news / price tickers / paid tips / guaranteed-profit spam is excluded or blocked.
+const TRADING_PATTERNS = [
+  /\b(trading|trader|stock\s*market|share\s*market|share\s*bazaar|technical\s*analysis|fundamental\s*analysis|candlestick|chart\s*pattern|intraday|swing\s*trad|options?\s*trading|futures?\s*trading|nifty|sensex|bank\s*nifty|support\s*and\s*resistance|moving\s*average|price\s*action|volume\s*analysis|stock\s*investing|investing\s+in\s+stocks?|demat|portfolio|risk\s*management|breakout|stock\s*pick(s|ing)?)\b/i,
+  /(शेयर\s*बाजार|शेयर\s*मार्केट|शेयर\s*बाज़ार|ट्रेडिंग|इंट्राडे|कैंडलस्टिक|चार्ट\s*पैटर्न|निफ्टी|सेंसेक्स|तकनीकी\s*विश्लेषण|टेक्निकल\s*एनालिसिस|स्टॉक\s*मार्केट|स्टॉक\s*बाज़ार|शेयर\s*सीखना|निवेश)/i
+];
+
+// Obvious scam markers — "sure shot tips", guaranteed profit, paid telegram/WhatsApp groups.
+const TRADING_SCAM_PATTERNS = [
+  /\b(sure[\s\-]*shot|guaranteed?\s*(profit|return|money|income|paisa)|100\s*%\s*(profit|sure|return)|risk[\s\-]*free\s*(returns?|profit)|double\s*(money|paisa))\b/i,
+  /\b(telegram|whatsapp|insta)\s*(channel|group)?[^\n]{0,40}(paid|premium|join|vip)\b/i,
+  /(पक्का\s*मुनाफा|गारंटीड?\s*(मुनाफा|रिटर्न|कमाई)|डबल\s*पैसा|पैसा\s*डबल)/i
+];
+
+// Learning-style markers get a small boost; pure live market noise gets penalized.
+const TRADING_LEARN_PATTERNS = [
+  /\b(course|tutorial|beginner|basics?|learn|sikhe?n?|seekhe?n?|explained|education|masterclass|strategy|webinar|full\s*course|for\s*beginners)\b/i,
+  /(सीखें|सिखा|बेसिक|सिखाओ|सिखाइए|समझें|समझिए|कोर्स|ट्यूटोरियल|स्ट्रेटेजी|शुरुआती)/i
+];
+const TRADING_NOISE_PATTERNS = [
+  /\b(live\s*(market|trading|analysis|trade)|market\s*update|share\s*price\s*today|stock\s*price\s*today|today'?s?\s*(nifty|sensex|market)\s*(update|analysis|prediction)|live\s*bazaar)\b/i,
+  /(लाइव\s*मार्केट|बाजार\s*अपडेट|शेयर\s*भाव\s*आज|निफ्टी\s*आज|सेंसेक्स\s*आज|मार्केट\s*टुडे)/i
+];
+
+const TRUSTED_TRADING_CHANNEL =
+  /(zerodha|varsity|groww|upstox|angel\s*one|pranjal\s*kamra|ca\s*rachana\s*ranade|investyadnya|nikkhil|nikhil\s*(bajaj|p|investments)|pushkar\s*raj\s*thakur|prasad\s*sangele|nooresh\s*merani|subasish\s*panigrahi|trading\s*with\s*rajni|prntscr|marketfeed|elearnmarkets|chartink|kamal\s*lohia|somil\s*garg|sachin\s*sirohi|jee\s*sikhe|freefincal|valueresearch|tradingqna|stockedge|marketsmojo)/i;
+
+function isTrading(video) {
+  const haystack = textOf(video);
+  return TRADING_PATTERNS.some(pattern => pattern.test(haystack));
+}
+
+function isTradingScam(video) {
+  const haystack = `${video.title || ''} ${video.channel || ''}`;
+  return TRADING_SCAM_PATTERNS.some(pattern => pattern.test(haystack));
+}
+
+function tradingScore(video) {
+  let score = 0;
+  if (isTrading(video)) score += 5;
+  if (TRADING_LEARN_PATTERNS.some(pattern => pattern.test(textOf(video)))) score += 2;
+  if (TRUSTED_TRADING_CHANNEL.test(textOf(video))) score += 3;
+  if (TRADING_NOISE_PATTERNS.some(pattern => pattern.test(video.title || ''))) score -= 3;
+  if (educationScore(video) > 0) score += 1;
+  const secs = parseDurationSeconds(video.duration);
+  if (secs !== null) {
+    if (secs >= 3600) score += 2;
+    else if (secs >= 1800) score += 1;
+    else if (secs < 120) score -= 1;
+  }
   return score;
 }
 
@@ -367,10 +660,10 @@ function detectLanguage(video) {
 }
 
 /**
- * Removes AI/template spam, keeps ONLY pre-2023 videos, prefers educational
- * + older videos, and enforces language (hi / en / all) and optional Bhagwan
- * topic. Ranking happens after the API cache, so switching sort/filter is
- * instant and never costs extra quota.
+ * Removes AI/template spam, keeps ONLY pre-2023 videos (audiobooks + trading: 2026 tak),
+ * prefers educational + older videos, and enforces language (hi / en / all) and
+ * optional Bhagwan / Audiobook / Trading topic. Ranking happens after the API cache,
+ * so switching sort/filter is instant and never costs extra quota.
  */
 function rankVideos(videos, { language = 'en', category = '', sort = 'smart', topic = 'general', relaxed = false } = {}) {
   const deduped = [];
@@ -382,12 +675,26 @@ function rankVideos(videos, { language = 'en', category = '', sort = 'smart', to
   }
 
   let list = deduped.filter(video => !isBlocked(video, { category }));
-  if (!list.length) list = deduped;
+  // Trading: obvious scam markers (sure shot / guaranteed profit / paid telegram groups) are hard-blocked.
+  if (topic === 'trading') {
+    list = list.filter(video => !isTradingScam(video));
+    if (!list.length) return [];
+  }
+  // Audiobooks: human voice ONLY — never fall back to AI-blocked results.
+  if (topic === 'audiobook') {
+    list = list.filter(video => !isAiVoice(video));
+    if (!list.length) return [];
+  } else if (!list.length) {
+    list = deduped;
+  }
 
   // HARD RULE: only before-2023 videos ("2023 se pehle wali hi video aye bas").
-  // Never fall back to post-2023 — if nothing is old enough, result stays empty.
-  const pre2023 = list.filter(video => isBefore2023(video));
-  list = pre2023;
+  // Audiobook + Trading exception: 2026 tak (aaj tak ki sari) — allow up to 2027-01-01.
+  // Never fall back to post-cutoff — if nothing is old enough, result stays empty.
+  const preCutoff = list.filter(video =>
+    topic === 'audiobook' || topic === 'trading' ? isBefore2027(video) : isBefore2023(video)
+  );
+  list = preCutoff;
   if (!list.length) return [];
 
   if (topic === 'bhagwan') {
@@ -395,9 +702,22 @@ function rankVideos(videos, { language = 'en', category = '', sort = 'smart', to
     if (bhagwan.length >= 4) list = bhagwan;
   }
 
+  if (topic === 'audiobook') {
+    const audiobooks = list.filter(video => isAudiobook(video));
+    if (audiobooks.length >= 4) list = audiobooks;
+  }
+
+  if (topic === 'trading') {
+    // Trading lane: SIRF trading-SIKHNE wali videos — educational share-market content only.
+    // LIVE market noise / price tickers are kept only if there aren't enough learning videos.
+    const trading = list.filter(video => isTrading(video));
+    if (trading.length >= 4) list = trading;
+    else if (!trading.length) return [];
+  }
+
   const categoryAllowsFun = /^(music|gaming)$/i.test(category);
-  // Bhagwan lane already curated — don't apply the generic educational cut there.
-  if (topic !== 'bhagwan' && !relaxed && !categoryAllowsFun) {
+  // Bhagwan / Audiobook / Trading lanes already curated — don't apply the generic educational cut there.
+  if (topic !== 'bhagwan' && topic !== 'audiobook' && topic !== 'trading' && !relaxed && !categoryAllowsFun) {
     const educational = list.filter(video => educationScore(video) > 0);
     const needed = Math.min(10, Math.max(4, Math.ceil(list.length * 0.35)));
     if (educational.length >= needed) list = educational;
@@ -408,11 +728,18 @@ function rankVideos(videos, { language = 'en', category = '', sort = 'smart', to
     if (sameLanguage.length) list = sameLanguage;
   }
 
-  const scored = list.map((video, index) => ({
-    video,
-    index,
-    score: (topic === 'bhagwan' ? bhagwanScore(video) * 2 : educationScore(video) * 2) + ageBonus(video)
-  }));
+  const scored = list.map((video, index) => {
+    const baseScore =
+      topic === 'bhagwan'
+        ? bhagwanScore(video) * 2
+        : topic === 'audiobook'
+          ? audiobookScore(video) * 2
+          : topic === 'trading'
+            ? tradingScore(video) * 2
+            : educationScore(video) * 2;
+    const age = topic === 'audiobook' || topic === 'trading' ? audiobookAgeBonus(video) : ageBonus(video);
+    return { video, index, score: baseScore + age };
+  });
 
   if (sort === 'oldest') {
     scored.sort((a, b) => (b.video.ageDays ?? -1) - (a.video.ageDays ?? -1) || a.index - b.index);
@@ -495,7 +822,7 @@ function normalizeApiSearchItem(item) {
   };
 }
 
-async function searchOfficial({ q, language, pageToken, limit }) {
+async function searchOfficial({ q, language, pageToken, limit, publishedBefore = '2023-01-01T00:00:00Z' }) {
   const key = apiKey();
   const { hl, gl, relevanceLanguage } = locale(language);
   const params = new URLSearchParams({
@@ -509,8 +836,9 @@ async function searchOfficial({ q, language, pageToken, limit }) {
     videoEmbeddable: 'true'
   });
   if (relevanceLanguage) params.set('relevanceLanguage', relevanceLanguage);
-  // Official API: ask YouTube itself for pre-2023 only (defense in depth — rankVideos also hard-filters).
-  params.set('publishedBefore', '2023-01-01T00:00:00Z');
+  // Official API: ask YouTube itself for pre-2023 only, or 2026 tak for audiobooks
+  // (defense in depth — rankVideos also hard-filters).
+  params.set('publishedBefore', publishedBefore);
   // Stored tokens carry an "api:" prefix — strip it before sending to Google.
   const rawToken = typeof pageToken === 'string' && pageToken.startsWith('api:') ? pageToken.slice(4) : pageToken;
   if (rawToken) params.set('pageToken', rawToken);
@@ -789,12 +1117,12 @@ function buildQuery(q, category) {
   return [search, categoryPart].filter(Boolean).join(' ').trim();
 }
 
-async function fetchSearchPage({ lang, query, pageToken, max }) {
-  const key = `search:${lang}:${max}:${query}:${pageToken}`;
+async function fetchSearchPage({ lang, query, pageToken, max, publishedBefore = '2023-01-01T00:00:00Z' }) {
+  const key = `search:${publishedBefore}:${lang}:${max}:${query}:${pageToken}`;
   const { value, cached: fromCache } = await cached(key, TTL.search, async () => {
     if (hasApiKey()) {
       try {
-        const result = await searchOfficial({ q: query, language: lang, pageToken, limit: max });
+        const result = await searchOfficial({ q: query, language: lang, pageToken, limit: max, publishedBefore });
         activeMode = 'live';
         return result;
       } catch (error) {
@@ -809,9 +1137,9 @@ async function fetchSearchPage({ lang, query, pageToken, max }) {
 }
 
 // One lane failing (YouTube hiccup / rate-limit) must not kill the whole feed.
-async function fetchLaneSafe({ lang, query, pageToken, max }) {
+async function fetchLaneSafe({ lang, query, pageToken, max, publishedBefore = '2023-01-01T00:00:00Z' }) {
   try {
-    return await fetchSearchPage({ lang, query, pageToken, max });
+    return await fetchSearchPage({ lang, query, pageToken, max, publishedBefore });
   } catch (error) {
     console.warn(`[youtube] lane failed (${query}): ${error.message}`);
     return { videos: [], nextPageToken: null, mode: 'public', cached: false };
@@ -952,9 +1280,11 @@ function interleaveMany(lists) {
 async function searchVideos({ q, language = 'en', category = '', pageToken = '', limit = 24, sort = 'smart', topic = 'general' }) {
   const lang = ['hi', 'en', 'all'].includes(language) ? language : 'en';
   const safeSort = ['smart', 'oldest', 'newest'].includes(sort) ? sort : 'smart';
-  const safeTopic = topic === 'bhagwan' ? 'bhagwan' : 'general';
+  const safeTopic = topic === 'bhagwan' ? 'bhagwan' : topic === 'audiobook' ? 'audiobook' : topic === 'trading' ? 'trading' : 'general';
   const max = Math.min(Math.max(Number(limit) || 24, 1), 50);
   const baseQuery = buildQuery(q, category);
+  const AUDIOBOOK_BEFORE = '2027-01-01T00:00:00Z'; // 2026 tak — aaj tak ki sari
+  const TRADING_BEFORE = '2027-01-01T00:00:00Z'; // 2026 tak — aaj tak ki sari
 
   // Bhagwan lane: curated multi-query merge (Mahabharat, Ramayan, Upanishad, Ganga, Gita...).
   if (safeTopic === 'bhagwan') {
@@ -1016,6 +1346,274 @@ async function searchVideos({ q, language = 'en', category = '', pageToken = '',
       cached: pages.every(page => page.cached),
       filters: { language: lang, sort: safeSort, category: '', topic: 'bhagwan' },
       stats: { fetched: raw.length, shown: videos.length }
+    };
+  }
+
+  // Audiobook lane: Hindi + English, 2026 tak (aaj tak ki sari), human voice ONLY.
+  // AI voice / AI-generated audiobooks are hard-blocked in rankVideos (isAiVoice).
+  if (safeTopic === 'audiobook') {
+    // User typed something specific inside Audiobook lane — search exactly that + audiobook bias.
+    if (baseQuery) {
+      let audioQuery = baseQuery;
+      if (!/audio[\s\-]*book|ऑडियो\s*बुक/i.test(audioQuery)) audioQuery = `${audioQuery} audiobook`;
+      // "All" mode: Hindi pass + English pass interleaved (genuinely mixed).
+      if (lang === 'all') {
+        let mix = decodeMixToken(pageToken);
+        const hindiQ = DEVANAGARI.test(audioQuery) || /\bhindi\b/i.test(audioQuery)
+          ? audioQuery
+          : `${audioQuery} हिंदी`;
+        const englishQ = audioQuery;
+        const seenSet = new Set(mix ? mix.seen : []);
+        let raw = [];
+        let videos = [];
+        let hindiPage = null;
+        let englishPage = null;
+        for (let round = 0; round < 5; round += 1) {
+          [hindiPage, englishPage] = await Promise.all([
+            fetchLaneSafe({ lang: 'hi', query: hindiQ, pageToken: mix?.hi || '', max, publishedBefore: AUDIOBOOK_BEFORE }),
+            fetchLaneSafe({ lang: 'en', query: englishQ, pageToken: mix?.en || '', max, publishedBefore: AUDIOBOOK_BEFORE })
+          ]);
+          raw = interleave(raw, hindhiSnake(hindiPage, englishPage));
+          const unseen = raw.filter(video => !seenSet.has(video.id));
+          videos = rankVideos(unseen, { language: 'all', category, sort: safeSort, topic: 'audiobook' });
+          const nextHi = hindiPage.nextPageToken || '';
+          const nextEn = englishPage.nextPageToken || '';
+          mix = { hi: nextHi, en: nextEn, seen: mix?.seen || [] };
+          if (videos.length >= max || (!nextHi && !nextEn)) break;
+        }
+        const hasMore = Boolean(mix && (mix.hi || mix.en));
+        const nextSeen = [...(mix?.seen || []), ...videos.map(video => video.id)];
+        return {
+          videos,
+          nextPageToken: hasMore ? encodeMixToken(mix.hi, mix.en, nextSeen) : null,
+          mode: englishPage?.mode || hindiPage?.mode || 'public',
+          query: audioQuery,
+          cached: Boolean(hindiPage?.cached && englishPage?.cached),
+          filters: { language: lang, sort: safeSort, category, topic: 'audiobook' },
+          stats: { fetched: raw.length, shown: videos.length }
+        };
+      }
+      const effectiveLang = lang;
+      const decoded = decodePageToken(pageToken);
+      const seenSet = new Set(decoded.seen);
+      let token = decoded.token;
+      let raw = [];
+      let videos = [];
+      let lastValue = null;
+      const fetchLimit = Math.min(50, Math.max(max, 48));
+      for (let round = 0; round < 6; round += 1) {
+        lastValue = await fetchLaneSafe({ lang: effectiveLang, query: audioQuery, pageToken: token, max: fetchLimit, publishedBefore: AUDIOBOOK_BEFORE })
+          .catch(() => ({ videos: [], nextPageToken: null, mode: 'public' }));
+        raw.push(...(lastValue.videos || []));
+        const unseen = raw.filter(video => !seenSet.has(video.id));
+        videos = rankVideos(unseen, { language: lang, category, sort: safeSort, topic: 'audiobook' });
+        token = lastValue.nextPageToken || '';
+        if (videos.length >= max || !token) break;
+      }
+      const nextSeen = [...decoded.seen, ...videos.map(video => video.id)];
+      return {
+        ...lastValue,
+        videos,
+        nextPageToken: token ? encodePageToken(token, nextSeen) : null,
+        query: audioQuery,
+        filters: { language: lang, sort: safeSort, category, topic: 'audiobook' },
+        stats: { fetched: raw.length, shown: videos.length }
+      };
+    }
+
+    // Curated audiobook feed: batched lanes (Hindi / English / mix) so scrolling keeps finding new books.
+    const audioLanes =
+      lang === 'hi'
+        ? AUDIOBOOK_QUERIES_HI.map(query => ({ query, lang: 'hi' }))
+        : lang === 'en'
+          ? AUDIOBOOK_QUERIES_EN.map(query => ({ query, lang: 'en' }))
+          : [
+              ...AUDIOBOOK_QUERIES_HI.map(query => ({ query, lang: 'hi' })),
+              ...AUDIOBOOK_QUERIES_EN.map(query => ({ query, lang: 'en' }))
+            ];
+    const BATCH_SIZE = hasApiKey() ? 3 : 10;
+    const decodedMulti = decodeMultiToken(pageToken);
+    const batchStart = decodedMulti ? decodedMulti.offset || 0 : 0;
+    let lanes = audioLanes.slice(batchStart, batchStart + BATCH_SIZE);
+    if (!lanes.length) lanes = audioLanes.slice(0, BATCH_SIZE);
+    const nextOffset = batchStart + BATCH_SIZE;
+    if (nextOffset >= audioLanes.length) {
+      // wrapped — keep paging through continuations; seen-filter will advance
+    }
+    let tokens = decodedMulti && (decodedMulti.offset || 0) === batchStart ? decodedMulti.tokens : lanes.map(() => '');
+    if (tokens.length !== lanes.length) tokens = lanes.map((_, index) => tokens[index] || '');
+    const seenSet = new Set(decodedMulti ? decodedMulti.seen : []);
+    let raw = [];
+    let ranked = [];
+    let pages = [];
+    let rounds = 0;
+    const MAX_ROUNDS = 5;
+    for (rounds = 0; rounds < MAX_ROUNDS; rounds += 1) {
+      pages = await Promise.all(
+        lanes.map((lane, index) =>
+          fetchLaneSafe({ lang: lane.lang, query: lane.query, pageToken: tokens[index] || '', max, publishedBefore: AUDIOBOOK_BEFORE })
+        )
+      );
+      for (const page of pages) raw.push(...(page.videos || []));
+      tokens = pages.map(page => page.nextPageToken || '');
+      const unseen = raw.filter(video => !seenSet.has(video.id));
+      ranked = rankVideos(unseen, { language: lang, category: '', sort: safeSort, topic: 'audiobook' });
+      const hasMore = tokens.some(Boolean);
+      if (ranked.length >= max || !hasMore) {
+        const nextSeen = [...(decodedMulti ? decodedMulti.seen : []), ...ranked.map(video => video.id)];
+        return {
+          videos: ranked,
+          nextPageToken: encodeMultiToken(tokens, nextSeen, nextOffset),
+          mode: pages.find(page => page.mode)?.mode || 'public',
+          query: lanes.map(lane => lane.query).join(' + '),
+          cached: pages.every(page => page.cached),
+          filters: { language: lang, sort: safeSort, category: '', topic: 'audiobook' },
+          stats: { fetched: raw.length, shown: ranked.length, rounds: rounds + 1, batch: batchStart }
+        };
+      }
+    }
+    const finalSeen = [...(decodedMulti ? decodedMulti.seen : []), ...ranked.map(video => video.id)];
+    return {
+      videos: ranked,
+      nextPageToken: encodeMultiToken(tokens, finalSeen, nextOffset),
+      mode: pages.find(page => page.mode)?.mode || 'public',
+      query: lanes.map(lane => lane.query).join(' + '),
+      cached: pages.every(page => page.cached),
+      filters: { language: lang, sort: safeSort, category: '', topic: 'audiobook' },
+      stats: { fetched: raw.length, shown: ranked.length, rounds, batch: batchStart }
+    };
+  }
+
+  // Trading lane: SIRF trading-SIKHNE wali videos, Hindi + English, 2026 tak (aaj tak ki sari).
+  // Live market noise / sure-shot / telegram-scam spam is filtered in rankVideos (trading topic).
+  if (safeTopic === 'trading') {
+    // User typed something specific inside Trading lane — search exactly that + trading bias.
+    if (baseQuery) {
+      let tradingQuery = baseQuery;
+      if (!/trad/i.test(tradingQuery)) tradingQuery = `${tradingQuery} trading`;
+      // "All" mode: Hindi pass + English pass interleaved (genuinely mixed).
+      if (lang === 'all') {
+        let mix = decodeMixToken(pageToken);
+        const hindiQ = DEVANAGARI.test(tradingQuery) || /\bhindi\b/i.test(tradingQuery)
+          ? tradingQuery
+          : `${tradingQuery} हिंदी`;
+        const englishQ = tradingQuery;
+        const seenSet = new Set(mix ? mix.seen : []);
+        let raw = [];
+        let videos = [];
+        let hindiPage = null;
+        let englishPage = null;
+        for (let round = 0; round < 5; round += 1) {
+          [hindiPage, englishPage] = await Promise.all([
+            fetchLaneSafe({ lang: 'hi', query: hindiQ, pageToken: mix?.hi || '', max, publishedBefore: TRADING_BEFORE }),
+            fetchLaneSafe({ lang: 'en', query: englishQ, pageToken: mix?.en || '', max, publishedBefore: TRADING_BEFORE })
+          ]);
+          raw = interleave(raw, hindhiSnake(hindiPage, englishPage));
+          const unseen = raw.filter(video => !seenSet.has(video.id));
+          videos = rankVideos(unseen, { language: 'all', category, sort: safeSort, topic: 'trading' });
+          const nextHi = hindiPage.nextPageToken || '';
+          const nextEn = englishPage.nextPageToken || '';
+          mix = { hi: nextHi, en: nextEn, seen: mix?.seen || [] };
+          if (videos.length >= max || (!nextHi && !nextEn)) break;
+        }
+        const hasMore = Boolean(mix && (mix.hi || mix.en));
+        const nextSeen = [...(mix?.seen || []), ...videos.map(video => video.id)];
+        return {
+          videos,
+          nextPageToken: hasMore ? encodeMixToken(mix.hi, mix.en, nextSeen) : null,
+          mode: englishPage?.mode || hindiPage?.mode || 'public',
+          query: tradingQuery,
+          cached: Boolean(hindiPage?.cached && englishPage?.cached),
+          filters: { language: lang, sort: safeSort, category, topic: 'trading' },
+          stats: { fetched: raw.length, shown: videos.length }
+        };
+      }
+      const effectiveLang = lang;
+      const decoded = decodePageToken(pageToken);
+      const seenSet = new Set(decoded.seen);
+      let token = decoded.token;
+      let raw = [];
+      let videos = [];
+      let lastValue = null;
+      const fetchLimit = Math.min(50, Math.max(max, 48));
+      for (let round = 0; round < 6; round += 1) {
+        lastValue = await fetchLaneSafe({ lang: effectiveLang, query: tradingQuery, pageToken: token, max: fetchLimit, publishedBefore: TRADING_BEFORE })
+          .catch(() => ({ videos: [], nextPageToken: null, mode: 'public' }));
+        raw.push(...(lastValue.videos || []));
+        const unseen = raw.filter(video => !seenSet.has(video.id));
+        videos = rankVideos(unseen, { language: lang, category, sort: safeSort, topic: 'trading' });
+        token = lastValue.nextPageToken || '';
+        if (videos.length >= max || !token) break;
+      }
+      const nextSeen = [...decoded.seen, ...videos.map(video => video.id)];
+      return {
+        ...lastValue,
+        videos,
+        nextPageToken: token ? encodePageToken(token, nextSeen) : null,
+        query: tradingQuery,
+        filters: { language: lang, sort: safeSort, category, topic: 'trading' },
+        stats: { fetched: raw.length, shown: videos.length }
+      };
+    }
+
+    // Curated trading feed: batched lanes (Hindi / English / mix) so scrolling keeps finding new learning videos.
+    const tradingLanes =
+      lang === 'hi'
+        ? TRADING_QUERIES_HI.map(query => ({ query, lang: 'hi' }))
+        : lang === 'en'
+          ? TRADING_QUERIES_EN.map(query => ({ query, lang: 'en' }))
+          : [
+              ...TRADING_QUERIES_HI.map(query => ({ query, lang: 'hi' })),
+              ...TRADING_QUERIES_EN.map(query => ({ query, lang: 'en' }))
+            ];
+    const BATCH_SIZE = hasApiKey() ? 3 : 10;
+    const decodedMulti = decodeMultiToken(pageToken);
+    const batchStart = decodedMulti ? decodedMulti.offset || 0 : 0;
+    let lanes = tradingLanes.slice(batchStart, batchStart + BATCH_SIZE);
+    if (!lanes.length) lanes = tradingLanes.slice(0, BATCH_SIZE);
+    const nextOffset = batchStart + BATCH_SIZE;
+
+    let tokens = decodedMulti && (decodedMulti.offset || 0) === batchStart ? decodedMulti.tokens : lanes.map(() => '');
+    if (tokens.length !== lanes.length) tokens = lanes.map((_, index) => tokens[index] || '');
+    const seenSet = new Set(decodedMulti ? decodedMulti.seen : []);
+    let raw = [];
+    let ranked = [];
+    let pages = [];
+    let rounds = 0;
+    const MAX_ROUNDS = 5;
+    for (rounds = 0; rounds < MAX_ROUNDS; rounds += 1) {
+      pages = await Promise.all(
+        lanes.map((lane, index) =>
+          fetchLaneSafe({ lang: lane.lang, query: lane.query, pageToken: tokens[index] || '', max, publishedBefore: TRADING_BEFORE })
+        )
+      );
+      for (const page of pages) raw.push(...(page.videos || []));
+      tokens = pages.map(page => page.nextPageToken || '');
+      const unseen = raw.filter(video => !seenSet.has(video.id));
+      ranked = rankVideos(unseen, { language: lang, category: '', sort: safeSort, topic: 'trading' });
+      const hasMore = tokens.some(Boolean);
+      if (ranked.length >= max || !hasMore) {
+        const nextSeen = [...(decodedMulti ? decodedMulti.seen : []), ...ranked.map(video => video.id)];
+        return {
+          videos: ranked,
+          nextPageToken: encodeMultiToken(tokens, nextSeen, nextOffset),
+          mode: pages.find(page => page.mode)?.mode || 'public',
+          query: lanes.map(lane => lane.query).join(' + '),
+          cached: pages.every(page => page.cached),
+          filters: { language: lang, sort: safeSort, category: '', topic: 'trading' },
+          stats: { fetched: raw.length, shown: ranked.length, rounds: rounds + 1, batch: batchStart }
+        };
+      }
+    }
+    const finalSeen = [...(decodedMulti ? decodedMulti.seen : []), ...ranked.map(video => video.id)];
+    return {
+      videos: ranked,
+      nextPageToken: encodeMultiToken(tokens, finalSeen, nextOffset),
+      mode: pages.find(page => page.mode)?.mode || 'public',
+      query: lanes.map(lane => lane.query).join(' + '),
+      cached: pages.every(page => page.cached),
+      filters: { language: lang, sort: safeSort, category: '', topic: 'trading' },
+      stats: { fetched: raw.length, shown: ranked.length, rounds, batch: batchStart }
     };
   }
 
@@ -1177,19 +1775,30 @@ async function getVideo(id) {
   return value;
 }
 
-async function relatedVideos({ id, title, channel, language = 'en', limit = 12 }) {
+async function relatedVideos({ id, title, channel, language = 'en', limit = 12, topic = 'general' }) {
   const lang = ['hi', 'en', 'all'].includes(language) ? language : 'en';
-  const keywords = clean(title).split(' ').slice(0, 7).join(' ');
+  const safeTopic = topic === 'audiobook' ? 'audiobook' : topic === 'bhagwan' ? 'bhagwan' : topic === 'trading' ? 'trading' : 'general';
+  const publishedBefore =
+    safeTopic === 'audiobook' || safeTopic === 'trading' ? '2027-01-01T00:00:00Z' : '2023-01-01T00:00:00Z';
+  let keywords = clean(title).split(' ').slice(0, 7).join(' ');
+  // Keep related lane on-topic: audiobook -> bias query with audiobook so hits stay human-voice books.
+  if (safeTopic === 'audiobook' && !/audio[\s\-]*book|ऑडियो\s*बुक/i.test(keywords)) {
+    keywords = `${keywords} audiobook`;
+  }
+  // Trading -> bias query with trading so related stays share-market education.
+  if (safeTopic === 'trading' && !/trad/i.test(keywords)) {
+    keywords = `${keywords} trading`;
+  }
   const query = clean(`${keywords} ${channel}`).slice(0, 120) || DEFAULT_QUERY[lang];
-  const { value } = await cached(`related:${lang}:${id}:${query}`, TTL.search, () =>
+  const { value } = await cached(`related:${safeTopic}:${publishedBefore}:${lang}:${id}:${query}`, TTL.search, () =>
     hasApiKey()
-      ? searchOfficial({ q: query, language: lang, limit }).catch(() =>
+      ? searchOfficial({ q: query, language: lang, limit, publishedBefore }).catch(() =>
           searchPublic({ q: query, language: lang, limit })
         )
       : searchPublic({ q: query, language: lang, limit })
   );
 
-  const videos = rankVideos(value.videos || [], { language: lang, relaxed: true })
+  const videos = rankVideos(value.videos || [], { language: lang, relaxed: true, topic: safeTopic })
     .filter(video => video.id !== id)
     .slice(0, limit);
 
@@ -1201,6 +1810,22 @@ async function suggestions({ q, language = 'en', topic = 'general' }) {
   const lang = language === 'hi' ? 'hi' : 'en';
   if (topic === 'bhagwan') {
     const local = BHAGWAN_SUGGESTIONS.filter(text =>
+      !term || text.toLowerCase().includes(term.toLowerCase()) || term.length < 3
+    );
+    if (!term) return local.slice(0, 8);
+    if (local.length >= 3) return local.slice(0, 8);
+    return local.slice(0, 3);
+  }
+  if (topic === 'audiobook') {
+    const local = AUDIOBOOK_SUGGESTIONS.filter(text =>
+      !term || text.toLowerCase().includes(term.toLowerCase()) || term.length < 3
+    );
+    if (!term) return local.slice(0, 8);
+    if (local.length >= 3) return local.slice(0, 8);
+    return local.slice(0, 3).concat([]);
+  }
+  if (topic === 'trading') {
+    const local = TRADING_SUGGESTIONS.filter(text =>
       !term || text.toLowerCase().includes(term.toLowerCase()) || term.length < 3
     );
     if (!term) return local.slice(0, 8);
@@ -1231,6 +1856,13 @@ function mode() {
   return activeMode === 'public' ? 'public' : 'live';
 }
 
+// Raw lane fetch for the custom-section feed engine: searches YouTube WITHOUT the
+// app-wide pre-2023 cutoff. The filter engine applies the section's own rules instead.
+async function rawSearch({ q, language = 'en', max = 48, pageToken = '', publishedBefore = '2027-01-01T00:00:00Z' }) {
+  const lang = language === 'hi' ? 'hi' : language === 'all' ? 'en' : 'en';
+  return fetchLaneSafe({ lang, query: q, pageToken, max, publishedBefore });
+}
+
 module.exports = {
   searchVideos,
   getVideo,
@@ -1238,5 +1870,6 @@ module.exports = {
   suggestions,
   hasApiKey,
   mode,
+  rawSearch,
   YouTubeError
 };
